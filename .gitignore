@@ -216,3 +216,37 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Virtual environment
+venv/
+.venv/
+
+
+# Environment variables
+.env
+.env.*
+
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+
+# IDE
+.vscode/
+.idea/
+
+
+# Data files
+*.tmp
+
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+# Playwright
+playwright-report/
+test-results/
