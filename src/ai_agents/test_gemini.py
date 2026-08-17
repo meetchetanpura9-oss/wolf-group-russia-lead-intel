@@ -20,7 +20,7 @@ def main():
     client = genai.Client(api_key=api_key)
 
     response = client.models.generate_content(
-        model="gemini-3.6-flash",
+        model="gemini-1.5-flash",
         contents="Reply with exactly: Gemini connection successful"
     )
 

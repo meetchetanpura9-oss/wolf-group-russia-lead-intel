@@ -100,53 +100,37 @@ Notes / Verification Notes: {clean_value(company_data.get('verification_notes'))
 
     prompt = f"Analyze this company and return the qualification JSON:\n\n{evidence_text}"
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                response_mime_type="application/json"
-            )
+    # Let exceptions (429, 503) propagate to the batch processor for retry handling
+    response = client.models.generate_content(
+        model="gemini-3.6-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            response_mime_type="application/json"
         )
+    )
 
+    try:
         result = parse_json_response(response.text)
-
-        # Validate that the required output fields exist
-        required_fields = [
-            "company_type", "product_relevance", "buyer_probability",
-            "import_probability", "company_size", "market_relevance",
-            "recent_activity", "decision_maker_status", "evidence",
-            "reason", "recommended_action"
-        ]
-        for field in required_fields:
-            if field not in result:
-                result[field] = "UNKNOWN"
-
-        # Deterministically calculate scores in Python using the classification fields
-        scores = calculate_lead_score(result)
-        result.update(scores)
-
-        return result
-
     except Exception as e:
-        print(f"Error executing AI qualification for {company_data.get('company_name')}: {e}")
-        fallback = {
-            "company_type": "UNKNOWN",
-            "product_relevance": "NONE",
-            "buyer_probability": "NONE",
-            "import_probability": "NONE",
-            "company_size": "UNKNOWN",
-            "market_relevance": "NONE",
-            "recent_activity": "NONE",
-            "decision_maker_status": "UNKNOWN",
-            "evidence": [f"Error executing qualification: {str(e)}"],
-            "reason": f"Execution error: {str(e)}",
-            "recommended_action": "Manual review required"
-        }
-        scores = calculate_lead_score(fallback)
-        fallback.update(scores)
-        return fallback
+        raise ValueError(f"JSON parsing error: {e}. Raw response: {response.text}")
+
+    # Validate that the required output fields exist
+    required_fields = [
+        "company_type", "product_relevance", "buyer_probability",
+        "import_probability", "company_size", "market_relevance",
+        "recent_activity", "decision_maker_status", "evidence",
+        "reason", "recommended_action"
+    ]
+    for field in required_fields:
+        if field not in result:
+            result[field] = "UNKNOWN"
+
+    # Deterministically calculate scores in Python using the classification fields
+    scores = calculate_lead_score(result)
+    result.update(scores)
+
+    return result
 
 
 if __name__ == "__main__":
