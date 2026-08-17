@@ -23,8 +23,14 @@ if not GEMINI_API_KEY:
         "Please configure a valid API key in your .env."
     )
 
-# Initialize the Gemini client using the working SDK client pattern
-client = genai.Client(api_key=GEMINI_API_KEY)
+# Initialize the Gemini client with disabled internal SDK retries to control error flow at application level
+client = genai.Client(
+    api_key=GEMINI_API_KEY,
+    http_options=types.HttpOptions(
+        timeout=30000,        # 30 seconds timeout
+        retry_options=None    # Disable SDK internal retries/tenacity loops
+    )
+)
 
 QUALIFICATION_SCHEMA = """
 {

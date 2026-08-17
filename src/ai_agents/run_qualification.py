@@ -91,6 +91,7 @@ def main():
     success_count = 0
     skipped_count = 0
     failed_count = 0
+    stop_batch = False
 
     for idx, (_, row) in enumerate(df_to_process.iterrows(), 1):
         company_name = row.get("company_name", "Unknown Company")
@@ -158,6 +159,7 @@ def main():
                     print("Status: RETRY_REQUIRED")
                     print("No score assigned.")
                     print("Resume after quota reset or quota upgrade.\n")
+                    stop_batch = True
                     break  # DO NOT RETRY, DO NOT SLEEP, exit the retry loop immediately!
 
                 # 3. Check for short-term rate limit (HTTP 429 temporary rate limit)
@@ -284,6 +286,10 @@ def main():
         
         # Save incrementally after every record to protect data progress
         save_current_state(df_verified, processed_this_run, existing_results)
+
+        if stop_batch:
+            print("Stopping batch run due to quota exhaustion. Processed leads have been saved.")
+            break
 
     # Re-save final set to ensure correct format
     save_current_state(df_verified, processed_this_run, existing_results)
